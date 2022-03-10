@@ -71,30 +71,33 @@ export class SocketListener {
                 chatOutPut: true
             };
 
+	    // tokens linked to their actor may have passed the actor uuid, rather than the token uuid
+	    var targetActor = targetToken.tokenUuid.startsWith("Actor") ? targetToken : targetToken.actor;
+		
             // check the action type and call the apprpriate function
             switch (action) {
                 case "buyItem":
-                    await TradeHelper.transaction(targetToken.actor, triggeringActor, packet.targetItemId, packet.quantity, options);
+                    await TradeHelper.transaction(targetActor, triggeringActor, packet.targetItemId, packet.quantity, options);
                     break;
                 case "tradeItems":
-                    await TradeHelper.tradeItems(targetToken.actor, triggeringActor, packet.trades, options);
+                    await TradeHelper.tradeItems(targetActor, triggeringActor, packet.trades, options);
                     //return this._handleRerender(packet.tokenUuid);
                     break;
                 case "lootAll":
-                    await TradeHelper.lootAllItems(targetToken.actor, triggeringActor);
+                    await TradeHelper.lootAllItems(targetActor, triggeringActor);
                     break;
                 case "lootItem":
                     let items = [{ id: packet.targetItemId, data: { data: { quantity: packet.quantity } } }];
                     options.type = 'loot';
-                    await TradeHelper.lootItems(targetToken.actor, triggeringActor, items, options);
+                    await TradeHelper.lootItems(targetActor, triggeringActor, items, options);
                     break;
                 case "distributeCurrency":
                     options.type = 'distributeCurrency';
-                    await TradeHelper.distributeCurrency(targetToken.actor, triggeringActor, options);
+                    await TradeHelper.distributeCurrency(targetActor, triggeringActor, options);
                     break;
                 case "lootCurrency":
                     options.type = 'lootCurrency';
-                    await TradeHelper.lootCurrency(targetToken.actor, triggeringActor, options);
+                    await TradeHelper.lootCurrency(targetActor, triggeringActor, options);
                     break;
                 case 'sheetUpdate':                //re render the sheet for the token.
                     return this._handleRerender(packet.tokenUuid);
