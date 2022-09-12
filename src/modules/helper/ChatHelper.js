@@ -97,20 +97,20 @@ export class ChatHelper {
         const mod = options?.priceModifier || 100;
 
         return movedItems.map((el) => {
-            const rawprice = el.item.price || el.item.price || 0,
+            const rawprice = el.item.system.price || el.item.system.price || 0,
                 price = (rawprice * mod) / 100,
-                totalPrice = price * el.quantity;
+                totalPrice = price * el.system.quantity;
 
             return {
-                quantity: el.quantity,
                 priceTotal: totalPrice.toFixed(2),
-                data: {
+                system: {
                     documentName: el.item.documentName,
                     img: el.item.img,
                     name: el.item.name,
                     id: el.item.id,
                     uuid: el.item.uuid,
                     price: price.toFixed(2),
+                    quantity: el.system.quantity,
                     rarity: el.item?.system?.rarity || el.item?.rarity || 'common'
                 }
             }
@@ -139,8 +139,8 @@ export class ChatHelper {
                     continue;
                 }
                 if (existingItem.name === parsedItem.name) {
-                    parsedItem.quantity += existingItem.quantity;
-                    parsedItem.priceTotal = Number(parsedItem.price * parsedItem.quantity).toFixed(2);
+                    parsedItem.system.quantity += existingItem.system.quantity;
+                    parsedItem.priceTotal = Number(parsedItem.system.price * parsedItem.system.quantity).toFixed(2);
 
                     existingItem = mergeObject(existingItem, parsedItem);
                 }

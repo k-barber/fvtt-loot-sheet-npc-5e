@@ -82,8 +82,8 @@ export class CurrencyHelper {
 
         lootCurrency = lootCurrency || game.settings.get(MODULE.ns, 'lootCurrencyDefault');
 
-        if (actor.currency) {
-            currency = duplicate(actor.currency);
+        if (actor.system.currency) {
+            currency = duplicate(actor.system.currency);
         }
 
         for (let key in lootCurrency) {

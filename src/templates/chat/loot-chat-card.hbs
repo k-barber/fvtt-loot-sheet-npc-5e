@@ -25,19 +25,19 @@
             {{#each items as |item|}}
                 <li class="table-result item flexrow">
                     <div class="item-quantity">
-                        <strong>{{item.quantity}}&nbsp; &#xD7;</strong>
+                        <strong>{{item.system.quantity}}&nbsp; &#xD7;</strong>
                     </div>
                     <a class="item-link lsnpc-document-link" draggable="true"
                             data-entity="{{item.documentName}}"
                             data-id="{{item.id}}"
                             data-uuid="{{item.uuid}}">
-                        <img class="item-image" src="{{item.img}}" class="{{#if ../colorRarity}}rarity-{{#if item.system.rarity}}{{item.system.rarity}}{{else}}common{{/if}}{{/if}}">
+                        <img class="item-image" src="{{item.system.img}}" class="{{#if ../colorRarity}}rarity-{{#if item.system.rarity}}{{item.system.rarity}}{{else}}common{{/if}}{{/if}}">
                         <div class="item-name">
-                            {{{item.name}}}
+                            {{{item.system.name}}}
                         </a>
                     </div>
-                    <div class="item-price" title="{{item.quantity}} &#xD7; {{item.price}} gp">
-                        {{item.priceTotal}} ({{item.price}} ) <i class="fas fa-coins"></i>
+                    <div class="item-price" title="{{item.system.quantity}} &#xD7; {{item.system.price}} gp">
+                        {{item.priceTotal}} ({{item.system.price}} ) <i class="fas fa-coins"></i>
                     </div>
                 </li>
             {{/each}}

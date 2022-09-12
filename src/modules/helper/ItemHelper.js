@@ -79,8 +79,8 @@ class ItemHelper {
                 ui.notifications.info(`${source.name} does not posess this ${item.name} anymore.`);
                 continue;
             }
-            const quantity = (sourceItem.system.quantity < item.system.quantity) ? parseInt(sourceItem.system.quantity) : parseInt(item.quantity),
-                updatedItem = { _id: sourceItem.id, data: { quantity: sourceItem.system.quantity - quantity } },
+            const quantity = (sourceItem.system.quantity < item.system.quantity) ? parseInt(sourceItem.system.quantity) : parseInt(item.system.quantity),
+                updatedItem = { _id: sourceItem.id, system: { quantity: sourceItem.system.quantity - quantity } },
                 targetItem = destination.getEmbeddedCollection('Item').find(i =>
                     sourceItem.name === i.name
                     && sourceItem.system.price === i.system.price
@@ -90,7 +90,7 @@ class ItemHelper {
             let newItem = {};
 
             if (targetItem) {
-                let targetUpdate = { _id: targetItem.id, data: { quantity: parseInt(targetItem.quantity + quantity) } };
+                let targetUpdate = { _id: targetItem.id, system: { quantity: parseInt(targetItem.system.quantity + quantity) } };
                 destinationUpdates.push(targetUpdate);
             } else {
                 newItem = duplicate(sourceItem);
@@ -107,7 +107,7 @@ class ItemHelper {
 
             results.push({
                 item: targetItem || newItem,
-                quantity: quantity
+                system: { quantity: quantity }
             });
         }
 
@@ -159,7 +159,7 @@ class ItemHelper {
                     if (options.removeDamagedItems) return false;
 
                     item.name += ' (Damaged)';
-                    item.price *= options.damagedItemsMultiplier;
+                    item.system.price *= options.damagedItemsMultiplier;
                 }
 
                 return true;
@@ -180,11 +180,11 @@ class ItemHelper {
      * @returns {Promise<void>}
      */
     static async _updateActorInventory(actor, items, updatedItems) {
-        if (items.length > 0) {
+        if (items.data.length > 0) {
             if (items.type === 'create') {
-                return actor.createEmbeddedDocuments("Item", items);
+                return actor.createEmbeddedDocuments("Item", items.data);
             } else if (items.type === 'delete') {
-                return actor.deleteEmbeddedDocuments("Item", items);
+                return actor.deleteEmbeddedDocuments("Item", items.data);
             }
         }
 

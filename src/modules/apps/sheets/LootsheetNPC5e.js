@@ -97,8 +97,8 @@ export class LootSheetNPC5e extends dnd5e.applications.actor.ActorSheet5eCharact
         context.isToken = (this?.token) ? true : false;
         context.items = sheetDataActorItems;
         context.interactingActor = game.user?.character?.name || "No Character selected";
-        if (game.user?.character?.currency) {
-            context.interactingActorFunds = {currency: CurrencyHelper.cleanCurrency(game.user?.character?.currency)};
+        if (game.user?.character?.system?.currency) {
+            context.interactingActorFunds = {currency: CurrencyHelper.cleanCurrency(game.user?.character?.system?.currency)};
         } else {
             context.interactingActorFunds = {currency: [] };
         }
@@ -277,13 +277,13 @@ export class LootSheetNPC5e extends dnd5e.applications.actor.ActorSheet5eCharact
 
             // filter equiped items with only 1 quantity
             playerItems = playerItems.filter(i => {
-                if (i.equipped && i.quantity > 1) return true;
-                if (!i.equipped) return true;
+                if (i.system.equipped && i.system.quantity > 1) return true;
+                if (!i.system.equipped) return true;
                 return false;
             });
             // decrease quantity of equiped items by 1
             playerItems = playerItems.map(i => {
-                if (i.equipped) i.quantity -= 1;
+                if (i.system.equipped) i.system.quantity -= 1;
                 return i;
             });
 

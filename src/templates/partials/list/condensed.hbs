@@ -4,14 +4,14 @@
             {{#each section.items as |item iid|}}
                 <li class="item loot-trigger rarity-{{#if item.system.rarity}}{{item.system.rarity}}{{else}}common{{/if}}"
                     data-item-id="{{item._id}}"
-                    data-item-quantity="{{item.quantity}}"
-                    data-item-weight="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.quantity}}"
-                    data-item-weight-hanging="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.quantity}}"
+                    data-item-quantity="{{item.system.quantity}}"
+                    data-item-weight="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.system.quantity}}"
+                    data-item-weight-hanging="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.system.quantity}}"
                     data-item-description="{{item.description.value}}"
                     data-item-name="{{item.name}}"
                     >
                     <div class="image" style="background-image: url({{item.img}})">
-                        <span class="quantity">{{item.quantity}}</span>
+                        <span class="quantity">{{item.system.quantity}}</span>
                     </div>
                 </li>
             {{/each}}

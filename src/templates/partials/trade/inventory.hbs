@@ -18,8 +18,8 @@
                     data-price="{{lootsheetprice item.system.price ../../priceModifier.buy}}"
                     data-price-label="{{approximateNumber (lootsheetprice item.system.price ../../priceModifier.buy false) 2}}"
                 {{/ifeq}}
-                data-weight="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.quantity}}"
-                data-weight-hanging="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.quantity}}"
+                data-weight="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.system.quantity}}"
+                data-weight-hanging="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.system.quantity}}"
                 data-name="{{item.name}}"
                 data-rarity="{{#if item.system.rarity}}{{item.system.rarity}}{{else}}common{{/if}}"
                 draggable="true"

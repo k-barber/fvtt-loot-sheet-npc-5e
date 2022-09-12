@@ -25,7 +25,7 @@ export class LootProcessor {
         this.actor = actor || this._getLootActor(actor);
         this.rawResults = results;
         this.lootResults = [];
-        this.currencyData = actor?.currency || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+        this.currencyData = actor?.system?.currency || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
         this.defaultConversions = {};
         this.options = options || {
             currencyString: '',
@@ -304,7 +304,7 @@ export class LootProcessor {
             return;
         }
         if (newItem.name) {
-            newItem.quantity = limitCheckedQuantity;
+            newItem.system.quantity = limitCheckedQuantity;
             /** we create a new item if we don't own it already */
             await actor.createEmbeddedDocuments('Item', [newItem]);
         }
@@ -412,8 +412,8 @@ export class LootProcessor {
         const uniqueItems = this.lootResults.reduce((acc, e) => {
             const found = acc.find(x => e.text === x.text && e.collection === x.collection);
             if (found) {
-                let quantity = found.quantity || 1;
-                found.quantity = quantity + 1;
+                let quantity = found.system?.quantity || 1;
+                found.system = {quantity: quantity + 1}
             } else {
                 acc.push(e);
             }
