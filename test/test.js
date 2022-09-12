@@ -17,7 +17,7 @@ describe('Check module structure', function(){
 
 describe('Check Permissions', () => {
   const pid = "aplayerID1234",
-        mockPlayer = { data: { _id: pid }},
+        mockPlayer = { _id: pid },
         mockActor = {permission: [{default: 0}]};
         mockActor.permission[pid] = 2;
 
