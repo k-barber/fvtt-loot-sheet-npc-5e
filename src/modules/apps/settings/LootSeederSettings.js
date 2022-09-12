@@ -197,7 +197,7 @@ export class LootSeederSettings {
 
     static get customFallbackDefaults() {
         return {
-            'data.data.details.cr_<=_1': {
+            'details.cr_<=_1': {
                 name: 'Example_CR1',
                 filters: [
                     {
@@ -210,7 +210,7 @@ export class LootSeederSettings {
                 tags: '',
                 state: false
             },
-            'data.data.details.cr_>=_4': {
+            'details.cr_>=_4': {
                 name: 'Example_CR_4_or_higher',
                 filters: [
                     {

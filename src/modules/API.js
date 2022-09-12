@@ -214,8 +214,8 @@ class API {
 
         for (let token of tokenstack) {
             if (!token.actor || token.actor.hasPlayerOwner) continue;      
-            token.actor.data.permission = PermissionHelper._updatedUserPermissions(token, CONST.DOCUMENT_PERMISSION_LEVELS.OBSERVER, players);  
-            await token.document.update({actor: {data: {permission: token.actor.data.permission}}});
+            token.actor.permission = PermissionHelper._updatedUserPermissions(token, CONST.DOCUMENT_PERMISSION_LEVELS.OBSERVER, players);  
+            await token.document.update({actor: {data: {permission: token.actor.permission}}});
         }
 
         response.data = responseData;
@@ -246,7 +246,7 @@ class API {
         }
 
         for (let player of players) {
-            response.data[player.data._id] = PermissionHelper.getLootPermissionForPlayer(token.actor.data, player);
+            response.data[player._id] = PermissionHelper.getLootPermissionForPlayer(token.actor, player);
         }
 
         if (verbose) API._verbose(response);
@@ -271,7 +271,7 @@ class API {
             const
                 permissions = PermissionHelper._updatedUserPermissions(token, players);
 
-            response.data[token.data.uuid] = permissions;
+            response.data[token.uuid] = permissions;
         }
 
         if (verbose) API._verbose(response);

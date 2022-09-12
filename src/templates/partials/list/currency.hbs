@@ -1,9 +1,9 @@
 <section class="currency-grid">
     <div class="currency-line flexrow">
         <ul class="currency-list">
-            {{#each data.currency as |c i|}}
+            {{#each currency as |c i|}}
                 <li class="coin currency-item coin-{{i}}" title="{{lookup (lookup ../config.currencies i) 'label'}}">
-                    <input type="number" name="data.currency.{{i}}" value="{{c}}" data-dtype="number" step="1" />
+                    <input type="number" name="currency.{{i}}" value="{{c}}" data-dtype="number" step="1" />
                     <label>{{i}}</label>
                 </li>
             {{/each}}

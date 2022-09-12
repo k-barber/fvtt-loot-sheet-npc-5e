@@ -1,4 +1,3 @@
-import Item5e from "/systems/dnd5e/module/item/entity.js";
 import { MODULE } from '../data/moduleConstants.js';
 
 class ItemHelper {
@@ -16,7 +15,7 @@ class ItemHelper {
             damagedItemsMultiplier: options?.damagedItemsMultiplier || 0,
             removeDamagedItems: options?.removeDamagedItems || false,
             filterNaturalWeapons: game.settings.get(MODULE.ns, MODULE.settings.keys.sheet.filterNaturalWeapons),
-            rarityPath: options?.rarityPath || 'data.rarity'
+            rarityPath: options?.rarityPath || 'rarity'
         };
     }
 
@@ -80,27 +79,27 @@ class ItemHelper {
                 ui.notifications.info(`${source.name} does not posess this ${item.name} anymore.`);
                 continue;
             }
-            const quantity = (sourceItem.data.data.quantity < item.data.data.quantity) ? parseInt(sourceItem.data.data.quantity) : parseInt(item.data.data.quantity),
-                updatedItem = { _id: sourceItem.id, data: { quantity: sourceItem.data.data.quantity - quantity } },
+            const quantity = (sourceItem.system.quantity < item.system.quantity) ? parseInt(sourceItem.system.quantity) : parseInt(item.quantity),
+                updatedItem = { _id: sourceItem.id, data: { quantity: sourceItem.system.quantity - quantity } },
                 targetItem = destination.getEmbeddedCollection('Item').find(i =>
                     sourceItem.name === i.name
-                    && sourceItem.data.data.price === i.data.data.price
-                    && sourceItem.data.data.weight === i.data.data.weight
+                    && sourceItem.system.price === i.system.price
+                    && sourceItem.system.weight === i.system.weight
                 );
 
             let newItem = {};
 
             if (targetItem) {
-                let targetUpdate = { _id: targetItem.id, data: { quantity: parseInt(targetItem.data.data.quantity + quantity) } };
+                let targetUpdate = { _id: targetItem.id, data: { quantity: parseInt(targetItem.quantity + quantity) } };
                 destinationUpdates.push(targetUpdate);
             } else {
                 newItem = duplicate(sourceItem);
-                newItem.data.quantity = parseInt(quantity);
-                newItem.data.equipped = false;
+                newItem.system.quantity = parseInt(quantity);
+                newItem.system.equipped = false;
                 destinationAdditions.push(newItem);
             }
 
-            if (updatedItem.data.quantity === 0) {
+            if (updatedItem.system.quantity === 0) {
                 sourceDeletes.push(sourceItem.id);
             } else {
                 sourceUpdates.push(updatedItem);
@@ -137,20 +136,20 @@ class ItemHelper {
             })*/
             .filter((item) => {
                 if(item.documentName){
-                    item = item.data; // we only need the item data
+                    item = item; // we only need the item data
                 }
 
                 if (options?.filterNaturalWeapons) {
                     if (item.type == 'weapon') {  
                         const filteredWeaponTypes = ['natural'];  
 
-                        return !filteredWeaponTypes.includes(item.data.weaponType);
+                        return !filteredWeaponTypes.includes(item.weaponType);
                     }
                 }
 
                 if (item.type == 'equipment') {
-                    if (!item.data.armor) return true;
-                    return item.data.armor.type != 'natural';
+                    if (!item.armor) return true;
+                    return item.armor.type != 'natural';
                 }
 
                 return !['class', 'spell', 'feat'].includes(item.type);
@@ -160,13 +159,13 @@ class ItemHelper {
                     if (options.removeDamagedItems) return false;
 
                     item.name += ' (Damaged)';
-                    item.data.price *= options.damagedItemsMultiplier;
+                    item.price *= options.damagedItemsMultiplier;
                 }
 
                 return true;
             })
             .map((item) => {
-                item.data.equipped = false;
+                item.equipped = false;
                 return item;
             });
     }
@@ -181,11 +180,11 @@ class ItemHelper {
      * @returns {Promise<void>}
      */
     static async _updateActorInventory(actor, items, updatedItems) {
-        if (items.data.length > 0) {
+        if (items.length > 0) {
             if (items.type === 'create') {
-                return actor.createEmbeddedDocuments("Item", items.data);
+                return actor.createEmbeddedDocuments("Item", items);
             } else if (items.type === 'delete') {
-                return actor.deleteEmbeddedDocuments("Item", items.data);
+                return actor.deleteEmbeddedDocuments("Item", items);
             }
         }
 
@@ -238,7 +237,7 @@ class ItemHelper {
      */
     static async applyItemConversions(itemData, itemType, conversions = null) {
         if (itemData.type === "spell") {
-            itemData = await Item5e.createScrollFromSpell(itemData);
+            itemData = await dnd5e.applications.item.Item5e.createScrollFromSpell(itemData);
         }
 
         const rarity = this.getRandomRarity(),
@@ -255,7 +254,7 @@ class ItemHelper {
                 name: `${itemData.name} Portrait`,
                 img: itemData?.img || "icons/svg/mystery-man.svg",
                 type: 'loot',
-                data: {
+                system: {
                     rarity: rarity.rarity,
                     price: priceRoll.total || 0.1
                 }
@@ -263,7 +262,7 @@ class ItemHelper {
             Scene: {
                 name: 'Map of ' + itemData.name,
                 img: itemData.thumb || "icons/svg/direction.svg",
-                data: {
+                system: {
                     rarity: rarity.rarity,
                     price: priceRoll.total || 0.1
                 },

@@ -1,16 +1,16 @@
 <div class="dnd5e lsnpc chat-card item-card loot-item-card" data-actor-id="{{destination.id}}"
-    data-lootsheet-loot-id="{{destination.data._id}}-{{type}}-{{sourceId}}" style="
+    data-lootsheet-loot-id="{{destination._id}}-{{type}}-{{sourceId}}" style="
         --sheettint: {{hexToRGB flags.lootsheetnpc5e.sheettint.value flags.lootsheetnpc5e.sheettint.alpha}};
         --avatartint: {{hexToRGB flags.lootsheetnpc5e.avatartint.value flags.lootsheetnpc5e.avatartint.alpha}};
         --blendmode: {{flags.lootsheetnpc5e.sheettint.blendmode}};
         --style: {{flags.lootsheetnpc5e.sheettint.style}};">
     <div class="loot-info flexrow" style="align-items: center; justify-content: center;">
         <a class="lsnpc-document-link" draggable="true" data-entity="Actor" data-uuid="{{destination.uuid}}">
-            <img src="{{destination.data.img}}" class="looter-icon character-icon" title="{{destination.name}}">
+            <img src="{{destination.img}}" class="looter-icon character-icon" title="{{destination.name}}">
         </a>
         <span class="action-message"> {{actionMessage}} </span>
         <a class="lsnpc-document-link" draggable="true" data-entity="Actor" data-uuid="{{source.uuid}}">
-            <img src="{{source.data.img}}" class="looter-icon npc-icon" title="{{source.data.name}}">
+            <img src="{{source.img}}" class="looter-icon npc-icon" title="{{source.name}}">
         </a>
     </div>
 

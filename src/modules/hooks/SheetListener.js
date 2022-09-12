@@ -161,7 +161,7 @@ export class SheetListener {
         const clearInventory = this.actor.getFlag(MODULE.ns, MODULE.flags.clearInventory);
 
         if (clearInventory) {
-            let currentItems = this.actor.data.items.map(i => i.id);
+            let currentItems = this.actor.items.map(i => i.id);
             await this.actor.deleteEmbeddedDocuments("Item", currentItems);
         }
 

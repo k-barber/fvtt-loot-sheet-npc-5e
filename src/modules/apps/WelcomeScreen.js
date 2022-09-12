@@ -14,7 +14,7 @@ export class WelcomeScreen extends Application {
       width: 450,
       height: 636,
       classes: ['lsnpc lsnpc-app welcome-screen'],
-      title: game.modules.get(MODULE.ns).data.title + ' welcome screen',
+      title: game.modules.get(MODULE.ns).title + ' welcome screen',
     });
 
   }

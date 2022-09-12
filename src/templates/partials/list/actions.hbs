@@ -16,22 +16,22 @@
                 <ol class="item-list">
                     {{#each section.items as |item iid|}}
                         <li class="item flexrow"
-                            data-item-id="{{item._id}}" data-max-quantity="{{item.data.quantity}}">
+                            data-item-id="{{item._id}}" data-max-quantity="{{item.quantity}}">
 
                             <div class="item-name flexrow rollable">
-                                <div class="item-image {{#if ../../colorRarity}}rarity-{{#if item.data.rarity}}{{item.data.rarity}}{{else}}common{{/if}}{{/if}}"
+                                <div class="item-image {{#if ../../colorRarity}}rarity-{{#if item.system.rarity}}{{item.system.rarity}}{{else}}common{{/if}}{{/if}}"
                                     style="background-image: url({{item.img}})"></div>
                                 <h4>
                                     {{item.name}}
                                 </h4>
                             </div>
-                            {{#if item.data.quantity}}
+                            {{#if item.quantity}}
                             <div class="item-quantity">
-                                <i class="fas fa-box" title="Quantity"></i> {{item.data.quantity}}
+                                <i class="fas fa-box" title="Quantity"></i> {{item.quantity}}
                             </div>
                             <div class="item-weight">
                                 <i class="fas fa-weight-hanging" title="Weight"></i>
-                                {{lootsheetweight item.data.weight}}{{lootsheetstackweight item.data.weight item.data.quantity}}
+                                {{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.quantity}}
                             </div>
                             {{/if}}
                             <div class="item-controls">

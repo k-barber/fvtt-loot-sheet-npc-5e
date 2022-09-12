@@ -82,15 +82,15 @@ export class CurrencyHelper {
 
         lootCurrency = lootCurrency || game.settings.get(MODULE.ns, 'lootCurrencyDefault');
 
-        if (actor.data.data.currency) {
-            currency = duplicate(actor.data.data.currency);
+        if (actor.currency) {
+            currency = duplicate(actor.currency);
         }
 
         for (let key in lootCurrency) {
             if (currency.hasOwnProperty(key)) {
                 if (adjutsByCR) {
                     // @ts-ignore
-                    let cr = game.actors.find(a => a._id === actor.data.actorId).data.data.details.cr || 0.25;
+                    let cr = game.actors.find(a => a._id === actor.actorId).details.cr || 0.25;
                     currency[key] = Number(currency[key] || 0) + Number(Math.ceil(cr * lootCurrency[key]));
                 } else {
                     currency[key] = Number(currency[key] || 0) + Number(lootCurrency[key]);
@@ -98,7 +98,7 @@ export class CurrencyHelper {
             }
         }
 
-        await actor.update({ 'data.currency': currency });
+        await actor.update({ 'currency': currency });
     }
 
     /**

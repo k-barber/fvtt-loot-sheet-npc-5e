@@ -1,5 +1,3 @@
-import Item5e from "/systems/dnd5e/module/item/entity.js";
-
 import { MODULE } from '../data/moduleConstants.js';
 import { LootProcessor } from '../classes/LootProcessor.js';
 import { CurrencyHelper } from "./CurrencyHelper.js";
@@ -53,17 +51,17 @@ export class TokenHelper {
 	 */
 	static async applyItemConversions(item, conversions) {
 		if (item.type === "spell") {
-			item = await Item5e.createScrollFromSpell(item);
+			item = await dnd5e.applications.item.Item5e.createScrollFromSpell(item);
 		}
 
 		const defaultConversions = {
 			Actor: {
-				text: `${ite?.data?.name} Portrait`,
+				text: `${ite?.name} Portrait`,
 				img: item?.img || "icons/svg/mystery-man.svg"
 			},
 			Scene: {
-				text: 'Map of ' + item?.data?.name,
-				img: item?.data?.thumb || "icons/svg/direction.svg",
+				text: 'Map of ' + item?.name,
+				img: item?.thumb || "icons/svg/direction.svg",
 				data: {
 					price: new Roll('1d20 + 10').roll().total || 1
 				}

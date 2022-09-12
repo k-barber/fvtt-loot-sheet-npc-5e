@@ -20,7 +20,7 @@ export class LootSeeder {
 
 		for (const currentActor of actors) {
 			//skip linked tokens
-			if (!currentActor || (currentActor.data.actorLink && options.force)) continue;
+			if (!currentActor || (currentActor.actorLink && options.force)) continue;
 
 			const rolltableReferences = ActorHelper.getRollTables(currentActor);
 			if (!rolltableReferences || rolltableReferences.length === 0) continue;
@@ -31,7 +31,7 @@ export class LootSeeder {
 					ui.notifications.error(MODULE.ns + `: No Rollable Table found with id "${rolltableReferences}".`);
 					continue;
 				}
-				let customRoll = await new Roll(this._getShopQtyFormula(currentActor), currentActor.data).roll({ async: true });
+				let customRoll = await new Roll(this._getShopQtyFormula(currentActor), currentActor).roll({ async: true });
 
 				options = this._prepareOptions(options, this._getFormulas(currentActor), customRoll.total, currentActor.uuid);
 				await ActorHelper.addLootToTarget(currentActor, rolltable, options);
@@ -70,7 +70,7 @@ export class LootSeeder {
 	}
 
 	static _getRollTables(actor) {
-		const creatureType = actor.data.data.details.type.value,
+		const creatureType = actor.type
 			rolltableFromActor = ActorHelper.getLinkedRolltable(actor),
 			rolltableByCreature = ActorHelper.getLinkedRolltableByCreatureType(creatureType),
 			rolltableByFilters = ActorHelper.getLinkedRolltableByFilters(actor),

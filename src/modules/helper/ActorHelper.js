@@ -13,7 +13,7 @@ export class ActorHelper {
      *
      */
     static getRollTables(actor) {
-        const creatureType = actor.data.data.details.type.value,
+        const creatureType = actor.type,
             rolltableFromActor = this.getLinkedRolltable(actor),
             rolltableByCreature = this.getLinkedRolltableByCreatureType(creatureType),
             rolltableByFilters = this.getLinkedRolltableByFilters(actor),
@@ -135,7 +135,7 @@ export class ActorHelper {
      */
      static passesFilter(subject, filters) {
         for (let filter of Object.values(filters)) {
-            let prop = getProperty(subject, `data.${filter.filterpath}`) || getProperty(subject, filter.filterpath);
+            let prop = getProperty(subject, `${filter.filterpath}`) || getProperty(subject, filter.filterpath);
             if (prop === undefined) return false;
             switch (filter.comparison) {
                 case '==': if (prop == filter.value) { return true; } break;
@@ -216,7 +216,7 @@ export class ActorHelper {
      static skipByCreatureType(actor) {
         if (!game.settings.get(MODULE.ns, MODULE.settings.keys.lootseeder.useSkiplist)) return false;
 
-        const creatureType = actor.data.data.details.type.value;
+        const creatureType = actor.details.type.value;
         if (!Object.keys(CONFIG.DND5E.creatureTypes).includes(creatureType)) return false;
 
         return game.settings.get(MODULE.ns, "skiplist_" + creatureType);

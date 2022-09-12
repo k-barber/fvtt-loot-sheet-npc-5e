@@ -1,6 +1,6 @@
 <div class="dnd5e lsnpc chat-card item-card loot-item-card"
     data-actor-id="{{destination.id}}"
-    data-lootsheet-loot-id="{{destination.data._id}}-{{type}}-{{sourceId}}"
+    data-lootsheet-loot-id="{{destination._id}}-{{type}}-{{sourceId}}"
     style="
         --sheettint: {{hexToRGB flags.lootsheetnpc5e.sheettint.value flags.lootsheetnpc5e.sheettint.alpha}};
         --avatartint: {{hexToRGB flags.lootsheetnpc5e.avatartint.value flags.lootsheetnpc5e.avatartint.alpha}};
@@ -8,11 +8,11 @@
         --style: {{flags.lootsheetnpc5e.sheettint.style}};">
     <div class="loot-info flexrow" style="align-items: center; justify-content: center;">
         <a class="lsnpc-document-link" draggable="true" data-entity="Actor" data-uuid="{{destination.uuid}}">
-            <img src="{{destination.data.img}}" class="looter-icon character-icon" title="{{destination.name}}">
+            <img src="{{destination.img}}" class="looter-icon character-icon" title="{{destination.name}}">
         </a>
         <span class="action-message"> {{actionMessage}} </span>
         <a class="lsnpc-document-link" draggable="true" data-entity="Actor" data-uuid="{{source.uuid}}">
-            <img src="{{source.data.img}}" class="looter-icon npc-icon" title="{{source.data.name}}">
+            <img src="{{source.img}}" class="looter-icon npc-icon" title="{{source.name}}">
         </a>
     </div>
 
@@ -28,16 +28,16 @@
                         <strong>{{item.quantity}}&nbsp; &#xD7;</strong>
                     </div>
                     <a class="item-link lsnpc-document-link" draggable="true"
-                            data-entity="{{item.data.documentName}}"
-                            data-id="{{item.data.id}}"
-                            data-uuid="{{item.data.uuid}}">
-                        <img class="item-image" src="{{item.data.img}}" class="{{#if ../colorRarity}}rarity-{{#if item.data.rarity}}{{item.data.rarity}}{{else}}common{{/if}}{{/if}}">
+                            data-entity="{{item.documentName}}"
+                            data-id="{{item.id}}"
+                            data-uuid="{{item.uuid}}">
+                        <img class="item-image" src="{{item.img}}" class="{{#if ../colorRarity}}rarity-{{#if item.system.rarity}}{{item.system.rarity}}{{else}}common{{/if}}{{/if}}">
                         <div class="item-name">
-                            {{{item.data.name}}}
+                            {{{item.name}}}
                         </a>
                     </div>
-                    <div class="item-price" title="{{item.quantity}} &#xD7; {{item.data.price}} gp">
-                        {{item.priceTotal}} ({{item.data.price}} ) <i class="fas fa-coins"></i>
+                    <div class="item-price" title="{{item.quantity}} &#xD7; {{item.price}} gp">
+                        {{item.priceTotal}} ({{item.price}} ) <i class="fas fa-coins"></i>
                     </div>
                 </li>
             {{/each}}

@@ -42,11 +42,11 @@ export class PriceModifierDialog extends FormApplication {
     }
 
     getData(){
-        console.log(MODULE.ns, ' getData: ', this.actor.data.flags.lootsheetnpc5e.priceModifier);
+        console.log(MODULE.ns, ' getData: ', this.actor.flags.lootsheetnpc5e.priceModifier);
         return {
-            flags: this.actor.data.flags,
-            currentModifier: this.data.currentModifier,
-            maxModifier: this.data.maxModifier
+            flags: this.actor.flags,
+            currentModifier: this.currentModifier,
+            maxModifier: this.maxModifier
         };
     }
 
@@ -59,7 +59,7 @@ export class PriceModifierDialog extends FormApplication {
 
         //nasty hack
         const app = document.querySelector('.lsnpc.dialog-price-modifier');
-        console.info(MODULE.ns, ' flags?: ', this.actor.data.flags);
+        console.info(MODULE.ns, ' flags?: ', this.actor.flags);
         app.classList.add(this.actor.getFlag(MODULE.ns, 'sheettint').style);
         let sheetTint = Handlebars.helpers.hexToRGB(this.actor.getFlag(MODULE.ns, 'sheettint').value, this.actor.getFlag(MODULE.ns, 'sheettint').alpha),
             avatarTint = Handlebars.helpers.hexToRGB(this.actor.getFlag(MODULE.ns, 'avatartint').value, this.actor.getFlag(MODULE.ns, 'avatartint').alpha),
@@ -79,7 +79,7 @@ export class PriceModifierDialog extends FormApplication {
      * @param {Event} event 
      */
     async _onChange(event){
-        //console.info('onchange: ', this.actor.data.flags);
+        //console.info('onchange: ', this.actor.flags);
         event.preventDefault();
         event.stopPropagation();
         

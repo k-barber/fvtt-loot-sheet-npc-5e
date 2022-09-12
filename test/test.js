@@ -29,7 +29,7 @@ describe('Check Permissions', () => {
         it(
           'Get default loot permissions',
           () => {
-            mockPlayer.data._id = 'doesntexist';
+            mockPlayer._id = 'doesntexist';
             assert.strictEqual(PermissionHelper.getLootPermissionForPlayer(mockActor,mockPlayer),0);
           }
         );

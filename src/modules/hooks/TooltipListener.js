@@ -141,7 +141,7 @@ export class TooltipListener {
             range: '<i class="ra ra-overhead"></i>',
         };
         html += `<header class="flexrow">
-                    <h3 class="item-name">${item.data.name}</h3>
+                    <h3 class="item-name">${item.name}</h3>
                     <span class="item-price">${overrides.price} 🪙 </span>
                 </header>`;
         html += `<ul class="labels">`;
@@ -155,8 +155,8 @@ export class TooltipListener {
         }
         html += `</ul>`;
 
-        if (item.data.data.description.value) {
-            html += `<article>${item.data.data.description.value}</article>`;
+        if (item.description) {
+            html += `<article>${item.description}</article>`;
         }
 
 

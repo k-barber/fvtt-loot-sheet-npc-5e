@@ -21,7 +21,7 @@
 
     <nav class="sheet-navigation tabs flexrow" data-group="primary">
         <a class="item active" data-tab="inventory">Inventory</a>
-        {{#if ../../owner}}<a class="item" data.tab="misc"></a>{{/if}}
+        {{#if ../../owner}}<a class="item" tab="misc"></a>{{/if}}
         <a class="item" data-tab="biography">Biography</a>
     </nav>
     <section class="sheet-lower flexrow">
@@ -188,7 +188,7 @@
         <section class="sheet-content content">
             <section class="sheet-body">
                 <div class="tab" data-tab="biography" data-group="primary">
-                    {{editor content=data.details.biography.value target="data.details.biography.value" button=true
+                    {{editor content=details.biography.value target="details.biography.value" button=true
                     owner=owner editable=editable}}
                 </div>
 
@@ -237,16 +237,16 @@
                                                 </h4>
                                             </div>
                                             <div class="item-quantity">
-                                                <i class="fas fa-box" title="Quantity"></i> {{item.data.quantity}}
+                                                <i class="fas fa-box" title="Quantity"></i> {{item.system.quantity}}
                                             </div>
                                             <div class="item-weight">
                                                 <i class="fas fa-weight-hanging" title="Weight"></i>
-                                                {{lootsheetweight item.data.weight}}{{lootsheetstackweight item.data.weight
-                                                item.data.quantity}}
+                                                {{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight
+                                                item.quantity}}
                                             </div>
                                             <div class="item-price">
                                                 <i class="fas fa-coins" title="Price (in gp)"></i> {{ lootsheetprice
-                                                item.data.price ../../priceModifier }}
+                                                item.system.price ../../priceModifier }}
                                             </div>
 
                                             <div class="item-controls">

@@ -1,6 +1,3 @@
-import ActorSheet5eNPC from "../../../../../systems/dnd5e/module/actor/sheets/npc.js";
-
-// ⬆️ 5e core imports
 
 import { MODULE } from "../../data/moduleConstants.js";
 import { LootSheetNPC5eHelper } from "../../helper/LootSheetNPC5eHelper.js";
@@ -16,7 +13,7 @@ import { CurrencyHelper } from "../../helper/CurrencyHelper.js";
  * @description A class for handling the loot sheet for NPCs.
  *
  */
-export class LootSheetNPC5e extends ActorSheet5eNPC {
+export class LootSheetNPC5e extends dnd5e.applications.actor.ActorSheet5eCharacter {
 
     /**
      * @module lootsheetnpc5e.LootSheetNPC5e.template
@@ -80,17 +77,17 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
         const typeKey = "lootsheettype",
             sheetType = await this._prepareSheetType(typeKey);
 
-        let context = super.getData(),
-            sheetDataActorItems = context.actor.items;
+        let context = await super.getData();
+        let sheetDataActorItems = context.actor.items;
 
         context.lootsheettype = sheetType;
         context.priceModifier = 1;
-        context.currency = CurrencyHelper.cleanCurrency(context.data.currency);
+        context.currency = CurrencyHelper.cleanCurrency(context.currency);
 
         if (game.user.isGM) {
             context = await this._prepareGMSettings(context);
         }
-        //actor.data.flags.lootsheetnpc5e.sheettint
+        //actor.flags.lootsheetnpc5e.sheettint
         context = await this._enrichByType(context, sheetType);
         sheetDataActorItems = this._enrichItems(sheetDataActorItems);
         sheetDataActorItems = LootSheetNPC5eHelper.getLootableItems(sheetDataActorItems);
@@ -100,8 +97,8 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
         context.isToken = (this?.token) ? true : false;
         context.items = sheetDataActorItems;
         context.interactingActor = game.user?.character?.name || "No Character selected";
-        if (game.user?.character?.data?.data?.currency) {
-            context.interactingActorFunds = {currency: CurrencyHelper.cleanCurrency(game.user?.character?.data?.data?.currency)};
+        if (game.user?.character?.currency) {
+            context.interactingActorFunds = {currency: CurrencyHelper.cleanCurrency(game.user?.character?.currency)};
         } else {
             context.interactingActorFunds = {currency: [] };
         }
@@ -188,12 +185,12 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
         let totalWeight = 0,
             totalPrice = 0,
             totalQuantity = 0;
-        sheetDataActorItems.forEach((item) => totalPrice += Math.round(item.data.quantity * ((item.data.price * priceModifier.sell) / 100)));
-        sheetDataActorItems.forEach((item) => totalQuantity += Math.round((item.data.quantity * 100) / 100));
-        sheetDataActorItems.forEach((item) => totalWeight += Math.round((item.data.quantity * item.data.weight * 100) / 100));
+        sheetDataActorItems.forEach((item) => totalPrice += Math.round(item.system.quantity * ((item.system.price * priceModifier.sell) / 100)));
+        sheetDataActorItems.forEach((item) => totalQuantity += Math.round((item.system.quantity * 100) / 100));
+        sheetDataActorItems.forEach((item) => totalWeight += Math.round((item.system.quantity * item.system.weight * 100) / 100));
 
         if (game.settings.get(MODULE.ns, "includeCurrencyWeight")) {
-            totalWeight += (Object.values(this.actor.data.data.currency).reduce(function (accumVariable, curValue) {
+            totalWeight += (Object.values(this.actor.currency).reduce(function (accumVariable, curValue) {
                 return accumVariable + curValue
             }, 0) / 50).toNearest(0.01);
         }
@@ -209,7 +206,7 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
     async _prepareSheetType(typeKey) {
         let type = this.actor.getFlag(MODULE.ns, typeKey);
         if (!type) {
-            if (!this.actor.data.flags.lootsheetnpc5e) {
+            if (!this.actor.flags.lootsheetnpc5e) {
                 await this.actor.update({ 'flags': MODULE.flags.default });
             }
         }
@@ -270,7 +267,7 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
      * @returns
      */
     _getTradeablePlayerInventory(playerCharacter){
-        let playerItems = duplicate(playerCharacter.data.items);
+        let playerItems = duplicate(playerCharacter.items);
 
 
             //enrich with uuid
@@ -280,13 +277,13 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
 
             // filter equiped items with only 1 quantity
             playerItems = playerItems.filter(i => {
-                if (i.data?.equipped && i.data.quantity > 1) return true;
-                if (!i.data?.equipped) return true;
+                if (i.equipped && i.quantity > 1) return true;
+                if (!i.equipped) return true;
                 return false;
             });
             // decrease quantity of equiped items by 1
             playerItems = playerItems.map(i => {
-                if (i.data?.equipped) i.data.quantity -= 1;
+                if (i.equipped) i.quantity -= 1;
                 return i;
             });
 
@@ -307,7 +304,7 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
         const observers = PermissionHelper.getEligableActors(this.actor),
             permissionsInfo = PermissionHelper.getPermissionInfo(),
             permissions = this._playerPermissions(sheetData),
-            currencySplit = CurrencyHelper.getSplitByObservers(sheetData.data.currency, observers.length),
+            currencySplit = CurrencyHelper.getSplitByObservers(sheetData.currency, observers.length),
             gameWorldTables = await TableHelper.getGameWorldRolltables();
 
         let loot = {};
@@ -320,7 +317,7 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
         loot.playersPermissionDescription = PermissionHelper.getPermissionInfo(permissions.playersPermission)?.description;
 
         sheetData.rolltables = gameWorldTables;
-        sheetData.actor.flags.lootsheetnpc5e = {...this.actor.data.flags?.lootsheetnpc5e, ...loot};
+        sheetData.actor.flags.lootsheetnpc5e = {...this.actor.flags?.lootsheetnpc5e, ...loot};
         return sheetData;
     }
 
@@ -343,12 +340,12 @@ export class LootSheetNPC5e extends ActorSheet5eNPC {
 
         for (let player of players) {
             // get primary/active actor for a player
-            const playerActor = game.actors.get(player.data.character);
+            const playerActor = game.actors.get(player.character);
 
             if (playerActor) {
-                player.actor = playerActor.data.name;
-                player.actorId = playerActor.data._id;
-                player.playerId = player.data._id;
+                player.actor = playerActor.name;
+                player.actorId = playerActor._id;
+                player.playerId = player._id;
                 player.lootPermission = PermissionHelper.getLootPermissionForPlayer(sheetData.actor, player);
 
                 commonPlayersPermission = (commonPlayersPermission < 0) ? player.lootPermission : commonPlayersPermission;
