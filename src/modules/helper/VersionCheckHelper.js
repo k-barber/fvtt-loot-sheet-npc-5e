@@ -32,14 +32,14 @@ export class VersionCheck {
   }
 
   static get (mN) {
-    return game.modules.get(mN).data.version
+    return game.modules.get(mN).version
   }
 
   static checkForUpdate (mN) {
       if (!this._r) this._reg(mN)
 
-      const mV = game.modules.get(mN).data.version,
-            url = game.modules.get(mN).data.manifest;
+      const mV = game.modules.get(mN).version,
+            url = game.modules.get(mN).manifest;
 
       const getJSON = function(url, callback) {
               var xhr = new XMLHttpRequest();

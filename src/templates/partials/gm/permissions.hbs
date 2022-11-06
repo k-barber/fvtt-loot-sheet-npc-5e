@@ -40,14 +40,14 @@
                         title="{{player.actor}} ({{player.name}}):{{player.lootPermissionDescription}}"
                         data-player-id="{{player.playerId}}" data-player-permission="{{player.lootPermission}}">
                         <img class="permission-player {{player.borderClass}}-border-permission"
-                            src="{{player.character.data.img}}" alt="{{player.actor}} ({{player.name}})">
+                            src="{{player.character.img}}" alt="{{player.actor}} ({{player.name}})">
                     </a>
                 </li>
                 {{/each}}
             </ol>
         </main>
-        <aside class="filter flexrow {{#if data.flags.lootsheetnpc5e.permissionsFilter}}filter-active{{/if}}">
-            <label title="{{data.flags.lootsheetnpc5e.permissionsFilter}}">
+        <aside class="filter flexrow {{#if actor.flags.lootsheetnpc5e.permissionsFilter}}filter-active{{/if}}">
+            <label title="{{actor.flags.lootsheetnpc5e.permissionsFilter}}">
                 <i class="fas fa-filter"></i> Filter eligable players
                 <aside class="infobox-wrapper">
                     <i class="fas fa-info-circle help" data-theme="lsn-help"></i>
@@ -57,8 +57,8 @@
                         <p>In the future these filters can be applied when making a token lootable or bulk assigning permissions.</p>
                     </div>
             </label>
-            <select name="data.flags.lootsheetnpc5e.permissionsFilter" class="permissions-filter">
-                {{#select data.flags.lootsheetnpc5e.permissionsFilter}}
+            <select name="flags.lootsheetnpc5e.permissionsFilter" class="permissions-filter">
+                {{#select actor.flags.lootsheetnpc5e.permissionsFilter}}
                     <option value="false">No Filter</option>
                     <option value="1">Characters of Players that view the scene.</option>
                     <option value="2">Characters of Players that have a token in the scene.</option>

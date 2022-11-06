@@ -136,10 +136,10 @@ export class LootsheetNPC5eHooks {
     static async onCreateToken(token, createData, options, userId) {
         if (!game.user.isGM) return;
         if (!game.settings.get(MODULE.ns, MODULE.settings.keys.lootseeder.autoSeedTokens)) return;
-        if (!token.actor || token.data.actorLink) return; // ignore linked tokens
+        if (!token.actor || token.actorLink) return; // ignore linked tokens
         const actor = token.actor;
 
-        if(ActorHelper.skipByCreatureType(actor)) return;
+        if (ActorHelper.skipByCreatureType(actor)) return;
         await LootSeeder.seedItemsToActors([actor]);
     }
 
@@ -226,10 +226,10 @@ export class LootsheetNPC5eHooks {
          */
         const oldClassName = 'dnd5e.LootSheet5eNPC',
             newClassName = 'dnd5e.LootSheetNPC5e',
-            migrationActors = game.actors.filter(a => a.data.type === 'npc' && a?.data?.flags?.core?.sheetClass === oldClassName);
+            migrationActors = game.actors.filter(a => a.type === 'npc' && a?.flags?.core?.sheetClass === oldClassName);
 
         for (let actor of migrationActors) {
-            actor.update({ data: { flags: { core: { sheetClass: newClassName } } } });
+            actor.update({ flags: { core: { sheetClass: newClassName } } });
         }
     }
 
@@ -240,10 +240,10 @@ export class LootsheetNPC5eHooks {
      *
      */
     static _skipTokenByType(token) {
-        if(!game.settings.get(MODULE.ns, MODULE.settings.keys.lootseeder.useSkiplist)) return false;
+        if (!game.settings.get(MODULE.ns, MODULE.settings.keys.lootseeder.useSkiplist)) return false;
 
-        const creatureType = token.actor.data.data.details.type.value;
-        if(!Object.keys(CONFIG.DND5E.creatureTypes).includes(creatureType)) return false;
+        const creatureType = token.actor.type;
+        if (!Object.keys(CONFIG.DND5E.creatureTypes).includes(creatureType)) return false;
 
         return game.settings.get(MODULE.ns, "skiplist_" + creatureType);
     }

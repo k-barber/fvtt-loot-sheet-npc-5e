@@ -61,7 +61,7 @@ export class ChatHelper {
             source: source,
             sourceId: (source.isLinked) ? source.data_id : source.id,
             destination: destination,
-            flags: (source.collectionName == 'tokens') ? source.actor.data.flags : source.data.flags,
+            flags: (source.collectionName == 'tokens') ? source.actor.flags : source.flags,
             items: chatItems,
             type: options.type,
             actionMessage: game.i18n.format('lsnpc.chatActionMessages.' + options.type, { source: source.name, destination: destination.name })
@@ -94,24 +94,24 @@ export class ChatHelper {
      * @returns {Array}
      */
     static _parseMovedItems(movedItems, options = {}) {
-        const mod = options?.priceModifier || 1;
+        const mod = options?.priceModifier || 100;
 
         return movedItems.map((el) => {
-            const rawprice = el.item.data.data?.price || el.item.data?.price || 0,
-                price = rawprice * mod,
-                totalPrice = price * el.quantity;
+            const rawprice = el.item.system.price || el.item.system.price || 0,
+                price = (rawprice * mod) / 100,
+                totalPrice = price * el.system.quantity;
 
             return {
-                quantity: el.quantity,
                 priceTotal: totalPrice.toFixed(2),
-                data: {
+                system: {
                     documentName: el.item.documentName,
                     img: el.item.img,
                     name: el.item.name,
                     id: el.item.id,
                     uuid: el.item.uuid,
                     price: price.toFixed(2),
-                    rarity: el.item.data?.data?.rarity || el.item.data?.rarity || 'common'
+                    quantity: el.system.quantity,
+                    rarity: el.item?.system?.rarity || el.item?.rarity || 'common'
                 }
             }
         });
@@ -133,14 +133,14 @@ export class ChatHelper {
     static _handleExistingItems(existingItems, parsedItems, options = { priceModifier: 1, verbose: true }) {
         if (existingItems) {
             for (let parsedItem of parsedItems) {
-                let existingItem = existingItems.find(item => item.data.id === parsedItem.data.id);
+                let existingItem = existingItems.find(item => item.id === parsedItem.id);
                 if (!existingItem) {
                     existingItems.push(parsedItem);
                     continue;
                 }
-                if (existingItem.data.name === parsedItem.data.name) {
-                    parsedItem.quantity += existingItem.quantity;
-                    parsedItem.priceTotal = Number(parsedItem.data.price * parsedItem.quantity).toFixed(2);
+                if (existingItem.name === parsedItem.name) {
+                    parsedItem.system.quantity += existingItem.system.quantity;
+                    parsedItem.priceTotal = Number(parsedItem.system.price * parsedItem.system.quantity).toFixed(2);
 
                     existingItem = mergeObject(existingItem, parsedItem);
                 }
@@ -172,7 +172,7 @@ export class ChatHelper {
      *
      */
     static _getItemsFromLootMessage(interactionId, options = { verbose: true }) {
-        let lootMessage = game.messages.filter(m => m.data.flags?.lootsheetnpc5e?.lootId == interactionId).pop(),
+        let lootMessage = game.messages.filter(m => m.flags?.lootsheetnpc5e?.lootId == interactionId).pop(),
             existingItems = { id: 0, items: [] };
 
         if (!lootMessage) {
@@ -182,7 +182,7 @@ export class ChatHelper {
             return existingItems;
         }
 
-        const stamp = lootMessage?.data.timestamp ?? 0,
+        const stamp = lootMessage?.timestamp ?? 0,
             timeSince = (Date.now() - stamp),
             gracePeriod = game.settings.get(MODULE.ns, MODULE.settings.keys.sheet.chatGracePeriod),
             outOfGrace = timeSince > (gracePeriod * 1000);
@@ -230,7 +230,7 @@ export class ChatHelper {
         let messageData = {
             source: source,
             destination: destination,
-            flags: (source.collectionName == 'tokens') ? source.actor.data.flags : source.data.flags,
+            flags: (source.collectionName == 'tokens') ? source.actor.flags : source.flags,
             actionMessage: game.i18n.format(`lsnpc.chatActionMessages.${options.type}`, { source: source.name, destination: destination.name }),
             movedFunds: false,
             shares: false,

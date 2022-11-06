@@ -209,16 +209,13 @@ class API {
 
         const tokenstack = (tokens) ? (tokens.length > 0) ? tokens : [tokens] : canvas.tokens.controlled;
 
-        let permissions = false,
-            response = API._response(200, 'success'),
-            responseData = {},
-            tokenData = { actorData: { permission: {} } };
+        let response = API._response(200, 'success'),
+            responseData = {};
 
         for (let token of tokenstack) {
-            let permissions = PermissionHelper._updatedUserPermissions(token, CONST.DOCUMENT_PERMISSION_LEVELS.OBSERVER, players);
-            tokenData.actorData.permission = permissions,
-                responseData[token.uuid] = tokenData.actorData.permission;
-            await token.document.update(tokenData);
+            if (!token.actor || token.actor.hasPlayerOwner) continue;      
+            token.actor.permission = PermissionHelper._updatedUserPermissions(token, CONST.DOCUMENT_PERMISSION_LEVELS.OBSERVER, players);  
+            await token.document.update({actor: {data: {permission: token.actor.permission}}});
         }
 
         response.data = responseData;
@@ -249,7 +246,7 @@ class API {
         }
 
         for (let player of players) {
-            response.data[player.data._id] = PermissionHelper.getLootPermissionForPlayer(token.actor.data, player);
+            response.data[player._id] = PermissionHelper.getLootPermissionForPlayer(token.actor, player);
         }
 
         if (verbose) API._verbose(response);
@@ -274,7 +271,7 @@ class API {
             const
                 permissions = PermissionHelper._updatedUserPermissions(token, players);
 
-            response.data[token.data.uuid] = permissions;
+            response.data[token.uuid] = permissions;
         }
 
         if (verbose) API._verbose(response);

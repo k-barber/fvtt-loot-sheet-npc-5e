@@ -40,14 +40,14 @@ export class PermissionHelper {
      **/
     static async bulkPermissionsUpdate(event, actor) {
         event.preventDefault();
-        const actorData = actor.data,
+        const actorData = actor,
             htmlObject = event.currentTarget,
             permissionValue = (!htmlObject.dataset.value) ? 0 : parseInt(htmlObject.dataset.value);
         let currentPermissions = duplicate(actorData.permission);
 
         //update permissions object
         for (let user of game.users) {
-            if (user.data.role === 1 || user.data.role === 2) {
+            if (user.role === 1 || user.role === 2) {
                 currentPermissions[user.id] = permissionValue;
             }
         }
@@ -77,7 +77,7 @@ export class PermissionHelper {
         event.preventDefault();
         const levels = [0, 2, 3];
         // Read player permission on this actor and adjust to new level
-        let currentPermissions = duplicate(actor.data.permission);
+        let currentPermissions = duplicate(actor.permission);
 
         playerId = playerId || event.currentTarget.dataset.playerId;
         currentPermissions[playerId] = newLevel || levels[(levels.indexOf(parseInt(currentPermissions[playerId])) + 1) % levels.length];
@@ -103,10 +103,10 @@ export class PermissionHelper {
         level = CONST.DOCUMENT_PERMISSION_LEVELS.OBSERVER || 0,
         lootingUsers = this.getPlayers()
     ) {
-        let currentPermissions = duplicate(token.actor.data.permission);
+        let currentPermissions = duplicate(token.actor.permission);
 
         lootingUsers.forEach((user) => {
-            currentPermissions[user.data._id] = level;
+            currentPermissions[user._id] = level;
         });
 
         return currentPermissions;
@@ -121,8 +121,8 @@ export class PermissionHelper {
      */
     static getLootPermissionForPlayer(actorData, player) {
         let defaultPermission = actorData.permission.default;
-        if (player.data._id in actorData.permission) {
-            return actorData.permission[player.data._id];
+        if (player._id in actorData.permission) {
+            return actorData.permission[player._id];
         } else if (typeof defaultPermission !== "undefined") {
             return defaultPermission;
         }
@@ -188,7 +188,7 @@ export class PermissionHelper {
             CONST.DOCUMENT_PERMISSION_LEVELS.OBSERVER
         ]
     ) {
-        return Object.entries(doc.data.permission)
+        return Object.entries(doc.permission)
             .reduce((all, c) => {
                 const [userId, level] = c;
                 if (userId === 'default') return all;
@@ -214,14 +214,14 @@ export class PermissionHelper {
      */
     static filterByTokenInScene(eligables) {
         return Array.from(canvas.tokens.placeables.reduce((acc, curr) => {
-            if (!curr.actor.hasPlayerOwner) return acc
-            for (const id of Object.keys(curr.actor.data.permission)) {
+            if (!curr.actor.hasPlayerOwner) return acc;
+            for (const id of Object.keys(curr.actor.permission)) {
               if (eligables.includes(id)) acc.add(id);
             }
             return acc
           }, new Set()));
 
-        //eligables = canvas.tokens.placeables.filter(t => t.actor.hasPlayerOwner).map(t => Object.keys(t.actor.data.permission).filter(k => eligables.includes(k)));
+        //eligables = canvas.tokens.placeables.filter(t => t.actor.hasPlayerOwner).map(t => Object.keys(t.actor.permission).filter(k => eligables.includes(k)));
     }
 
     /**

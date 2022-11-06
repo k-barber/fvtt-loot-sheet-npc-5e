@@ -37,6 +37,7 @@ export class TradeHelper {
         for (let type in trades) {
             if (!trades[type].length > 0) continue;
             options.type = type;
+            options.priceModifier = npcActor.getFlag(MODULE.ns, MODULE.flags.priceModifier) || { buy: 100, sell: 100 };
             this._handleTradyByType(trades, playerCharacter, npcActor, options);
         }
     }
@@ -78,11 +79,7 @@ export class TradeHelper {
     static async lootAllItems(source, destination, options = {}) {
         const items = ItemHelper.getLootableItems(source.items).map((item) => ({
             id: item.id,
-            data: {
-                data: {
-                    quantity: item.data.data.quantity
-                }
-            }
+            quantity: item.system.quantity
         }));
 
         this.lootItems(source, destination, items, options);
@@ -125,19 +122,23 @@ export class TradeHelper {
     static async transaction(seller, buyer, itemId, quantity, options = { chatOutPut: true }) {
         // On 0 quantity skip everything to avoid error down the line
         const soldItem = seller.getEmbeddedDocument("Item", itemId),
-            priceModifier = parseFloat(seller.getFlag(MODULE.ns, MODULE.flags.priceModifier)) || 1;
+            priceModifier = seller.getFlag(MODULE.ns, MODULE.flags.priceModifier) || { buy: 100, sell: 100 };
+
+        options.priceModifier = (options.type === 'buy') ? priceModifier.buy : priceModifier.sell;
 
         if (!soldItem) return ItemHelper.errorMessageToActor(seller, `${seller.name} doesn't posses this item anymore.`);
 
         let moved = false;
-        quantity = (soldItem.data.data.quantity < quantity) ? parseInt(soldItem.data.data.quantity) : parseInt(quantity);
+        quantity = (soldItem.system.quantity < quantity) ? parseInt(soldItem.system.quantity) : parseInt(quantity);
 
-        let itemCostInGold = this._getItemPriceInGold(soldItem, priceModifier, quantity),
+        let originalItemPrice = soldItem.system.price,
+            itemCostInGold = this._getItemPriceInGold(originalItemPrice, priceModifier.sell, quantity),
             successfullTransaction = await this._updateFunds(seller, buyer, itemCostInGold);
+
         if (!successfullTransaction) return false;
-        moved = await ItemHelper.moveItemsToDestination(seller, buyer, [{ id: itemId, data: { data: { quantity: quantity } } }]);
+        moved = await ItemHelper.moveItemsToDestination(seller, buyer, [{ id: itemId, system: { quantity: quantity } }]);
+
         options.type = "buy";
-        options.priceModifier = priceModifier;
         ChatHelper.tradeChatMessage(seller, buyer, moved, options);
     }
 
@@ -153,14 +154,14 @@ export class TradeHelper {
      */
     static async distributeCurrency(source, destination, options = { verbose: true }) {
         const eligables = PermissionHelper.getEligableActors(source),
-            currency = CurrencyHelper.handleActorCurrency(source.data.data.currency),
+            currency = CurrencyHelper.cleanCurrency(source.system.currency),
             shares = CurrencyHelper.getSharesAndRemainder(currency, eligables.length);
 
         let splits = { shares: shares.currencyShares, receivers: [] };
 
         if (options.verbose) {
             let cmsg = `${MODULE.ns} | distributeCurrency |`;
-            console.log(cmsg + ' actorData:', source.data);
+            console.log(cmsg + ' actorData:', source);
             console.log(cmsg + ' players:', game.users.players);
             console.log(cmsg + ' observers:', eligables);
             console.log(cmsg + ' currencyShares:', shares.currencyShares);
@@ -173,20 +174,20 @@ export class TradeHelper {
             let playerCharacter = player.character;
             if (!playerCharacter || !eligables.includes(player.id)) continue;
 
-            let playerCurrency = duplicate(playerCharacter.data.data.currency),
-                newCurrency = duplicate(playerCharacter.data.data.currency);
+            let playerCurrency = duplicate(playerCharacter.system.currency),
+                newCurrency = duplicate(playerCharacter.system.currency);
 
-            splits.receivers.push(playerCharacter.data.name);
+            splits.receivers.push(playerCharacter.name);
             console.log(splits);
             for (let c in playerCurrency) {
                 newCurrency[c] = parseInt(playerCurrency[c] || 0) + shares.currencyShares[c];
             }
 
-            await playerCharacter.update({ 'data.currency': newCurrency });
+            await playerCharacter.update({ 'currency': newCurrency });
         }
 
         // set source funds to 0
-        source.update({ "data.currency": { cp: 0, ep: 0, gp: 0, pp: 0, sp: 0 } });
+        source.update({ "currency": { cp: 0, ep: 0, gp: 0, pp: 0, sp: 0 } });
 
         // update the chat
         if (!options.chatOutPut) return;
@@ -211,10 +212,10 @@ export class TradeHelper {
      * @inheritdoc
      */
     static async lootCurrency(source, destination, options = { chatOutPut: true }) {
-        const actorData = source.data;
-        let sheetCurrency = duplicate(actorData.data.currency),
-            originalCurrency = duplicate(destination.data.data.currency),
-            newCurrency = duplicate(destination.data.data.currency),
+        const actorData = source;
+        let sheetCurrency = duplicate(actorData.system.currency),
+            originalCurrency = duplicate(destination.system.currency),
+            newCurrency = duplicate(destination.system.currency),
             movedFunds = {};
 
         // calculate the new currency
@@ -226,10 +227,10 @@ export class TradeHelper {
         }
 
         // set the destination currency to the new currency
-        destination.update({ 'data.currency': newCurrency });
+        destination.update({ 'system.currency': newCurrency });
 
         // set source funds to 0
-        source.update({ "data.currency": { cp: 0, ep: 0, gp: 0, pp: 0, sp: 0 } });
+        source.update({ "system.currency": { cp: 0, ep: 0, gp: 0, pp: 0, sp: 0 } });
 
         // update the chat
         if (!options.chatOutPut) return;
@@ -265,9 +266,14 @@ export class TradeHelper {
 
         const tradeType = options.type,
             playerActions = ['sell', 'give'],
-            source = playerActions.includes(tradeType) ? playerCharacter : npcActor,
-            destination = playerActions.includes(tradeType) ? npcActor : playerCharacter,
-            preparedTrade = this._prepareTrade(source, trades[tradeType], options),
+            playerToNPC = playerActions.includes(tradeType),
+            source = playerToNPC ? playerCharacter : npcActor,
+            destination = playerToNPC ? npcActor : playerCharacter,
+            tradeTypePriceModifier = options.priceModifier[tradeType === 'sell' ? 'buy' : 'sell'];
+
+        options.priceModifier = tradeTypePriceModifier;
+
+        const preparedTrade = this._prepareTrade(source, trades[tradeType], options),
             successfullTransaction = await this.moneyExchange(source, destination, tradeType, preparedTrade.tradeSum, options);
 
         if (!successfullTransaction) return false;
@@ -289,6 +295,7 @@ export class TradeHelper {
         let successfullTransaction = true;
 
         if (!freeTradeTypes.includes(tradeType)) {
+            console.warn(MODULE.ns, tradeSum, options.priceModifier);
             successfullTransaction = await this._updateFunds(source, destination, tradeSum, options);
         }
 
@@ -305,7 +312,6 @@ export class TradeHelper {
      *
      * @param {Actor} source
      * @param {Collection} items
-     * @param {number} tradeSum
      * @param {object} options
      *
      * @returns {Array} [items, tradeSum]
@@ -313,18 +319,18 @@ export class TradeHelper {
      * @author Daniel Böttner <@DanielBoettner>
      */
     static _prepareTrade(source, items, options = {}) {
-        const priceModifier = this._getPriceModifier(source);
+        const priceModifier = options.priceModifier.sell || 100;
         let tradeSum = 0;
         for (const [key, item] of items.entries()) {
             if (!source.items.find(i => i.id == item.id)) {
-                if (options?.verbose)
-                    console.log(`${MODULE.ns} | _prepareTrade | Removed item "${item.name}" (id: ${item.id}) from trade. Item not found in inventory of the source actor.`);
+                console.log(`${MODULE.ns} | _prepareTrade | Removed item "${item.name}" (id: ${item.id}) from trade. Item not found in inventory of the source actor.`);
                 delete items[key];
                 continue;
             }
             // Add item price to the total sum of the trade
-            tradeSum += this._getItemPriceInGold(item, priceModifier, item.data.data.quantity);
-            if (options?.verbose) console.log(`${MODULE.ns} | ${this._prepareTrade.name} | tradeSum updated to: `);
+            const originalItemPrice = item.system.price;
+            tradeSum += this._getItemPriceInGold(originalItemPrice, priceModifier, item.system.quantity);
+            console.info(`${MODULE.ns} | ${this._prepareTrade.name} | tradeSum updated to: `, tradeSum);
         }
 
         return { items: items, tradeSum: tradeSum };
@@ -333,14 +339,15 @@ export class TradeHelper {
     /**
      * @summary Get the items price in gold
      *
-     * @param {Item} item
-     * @param {number} priceModifier
+     * @param {number} price number
+     * @param {number} priceModifier number
      * @param {number} quantity - defaults to 1
 
      * @returns {number} price - a float with 5 decimals
      */
-    static _getItemPriceInGold(item, priceModifier, quantity = 1) {
-        return parseFloat(((item.data.data.price * priceModifier * 1000) / 1000 * quantity).toFixed(5));
+    static _getItemPriceInGold(price, priceModifier, quantity = 1) {
+        console.warn(`${MODULE.ns} | 'getItemPriceInGold' | priceModifier: ${priceModifier}`);
+        return parseFloat(((price * priceModifier / 100) * quantity).toFixed(5));
     }
 
     /**
@@ -351,8 +358,20 @@ export class TradeHelper {
      *
      */
     static _getPriceModifier(actor) {
-        let priceModifier = actor.getFlag(MODULE.ns, MODULE.flags.priceModifier) || 1;
-        return parseFloat(priceModifier).toPrecision(2) || 1;
+        let priceModifier = { buy: 100, sell: 100, give: 100, loot: 100 },
+            flagIsObject = (typeof actor.getFlag(MODULE.ns, MODULE.flags.priceModifier) === 'object');
+
+        if (flagIsObject) {
+            priceModifier = actor.getFlag(MODULE.ns, MODULE.flags.priceModifier);
+        } else {
+            priceModifier.sell = actor.getFlag(MODULE.ns, MODULE.flags.priceModifier) || 100;
+        }
+
+        for (let p in priceModifier) {
+            priceModifier[p] = parseFloat(priceModifier[p]).toPrecision(2);
+        }
+
+        return priceModifier;
     }
 
     /**
@@ -371,24 +390,25 @@ export class TradeHelper {
      *
      * @returns {boolean} true if the transaction was successful
      */
-    static async _updateFunds(seller, buyer, itemCostInGold) {
+    static async _updateFunds(seller, buyer, itemCostInGold, options = {}) {
         const rates = CurrencyHelper.getRates(),
             itemCost = {
-                "pp": itemCostInGold * rates.pp,
+                "pp": CurrencyHelper._calculateCoin(itemCostInGold, 'pp', 'gp'),
                 "gp": itemCostInGold,
-                "ep": itemCostInGold * rates.ep,
-                "sp": itemCostInGold * rates.sp,
-                "cp": itemCostInGold * rates.cp
+                "ep": CurrencyHelper._calculateCoin(itemCostInGold, 'ep', 'gp'),
+                "sp": CurrencyHelper._calculateCoin(itemCostInGold, 'sp', 'gp'),
+                "cp": CurrencyHelper._calculateCoin(itemCostInGold, 'cp', 'gp')
             };
 
-        let buyerFunds = CurrencyHelper.handleActorCurrency(buyer.data.data.currency),
-            sellerFunds = CurrencyHelper.handleActorCurrency(seller.data.data.currency),
+        let buyerFunds = CurrencyHelper.cleanCurrency(buyer.system.currency),
+            sellerFunds = CurrencyHelper.cleanCurrency(seller.system.currency),
             fundsAsPlatinum = {
                 "buyer": this._getFundsAsPlatinum(buyerFunds, rates),
                 "seller": this._getFundsAsPlatinum(sellerFunds, rates)
             };
 
         if (itemCost.pp > fundsAsPlatinum.buyer) {
+            ui.notifications.error(buyer.name + " does not have enough funds to buy this item.");
             ItemHelper.errorMessageToActor(buyer, buyer.name + ` doesn't have enough funds to purchase an item for ${itemCost.gp}gp.`);
             return false;
         }
@@ -428,27 +448,13 @@ export class TradeHelper {
                 sellerFunds.pp += itemCost.pp;
             }
 
+            console.warn(MODULE.ns, 'before smoothen', buyerFunds);
             buyerFunds = this._smoothenFunds(buyerFunds, rates);
+            console.warn(MODULE.ns, 'after smoothen', buyerFunds);
             sellerFunds = this._smoothenFunds(sellerFunds, rates);
         }
-      
-        return { buyerFunds: buyerFunds, sellerFunds: sellerFunds };
-    }
 
-    /**
-     *
-     * @param {object} itemCost
-     *
-     * @returns
-     */
-    findSmallestChange(itemCost) {
-        let smallestChange = [];
-        for (const [key, value] of Object.entries(itemCost)) {
-            if (Number.isInteger(value)) {
-                smallestChange[value] = key;
-            }
-        }
-        return smallestChange.filter(x=>x!==undefined);
+        return { buyerFunds: buyerFunds, sellerFunds: sellerFunds };
     }
 
     /**
@@ -461,15 +467,18 @@ export class TradeHelper {
      * @version 1.0.0
      *
      */
-    static _getFundsAsPlatinum(funds, rates) {
+    static _getFundsAsPlatinum(funds) {
+        console.warn(MODULE.ns, 'getFundsAsPlatinum', funds);
+        const target = 'pp';
         let fundsAsPlatinum = funds.pp;
 
-        fundsAsPlatinum += funds.gp / rates.pp;
-        fundsAsPlatinum += (funds.ep / rates.gp) / rates.pp;
-        fundsAsPlatinum += (funds.sp / rates.gp) / rates.pp;
-        fundsAsPlatinum += (funds.cp / rates.gp) / rates.pp;
+        fundsAsPlatinum += CurrencyHelper._calculateCoin(funds.gp, target, 'gp');
+        fundsAsPlatinum += CurrencyHelper._calculateCoin(funds.ep, target, 'ep');
+        fundsAsPlatinum += CurrencyHelper._calculateCoin(funds.sp, target, 'sp');
+        fundsAsPlatinum += CurrencyHelper._calculateCoin(funds.cp, target, 'cp');
 
-        return fundsAsPlatinum;
+        console.log(`${MODULE.ns} | _getFundsAsPlatinum | fundsAsPlatinum: `, fundsAsPlatinum);
+        return fundsAsPlatinum || 0;
     }
 
     /**
@@ -487,31 +496,39 @@ export class TradeHelper {
 
 
     /**
-     * @summary Take portions of a currency and add them as a integer to the next lower currency
+     * @summary Take portions or negative values of a currency and add the value to compensation currency
      *
+     * 
      * @param {object} funds
      * @param {object} compensation
-     * @param {object} rates
      *
      * @returns {object}
      */
-    static _smoothenFunds(funds, rates) {
-        const compensation = { "pp": "gp", "gp": "ep", "ep": "sp", "sp": "cp" };
+    static _smoothenFunds(funds) {
+        const compensation = { "pp": "gp", "gp": "ep", "ep": "sp", "sp": "cp" },
+            order = ["pp", "gp", "ep", "sp", "cp"];
 
-        for (let currency in funds) {
+        order.forEach(currency => {             
             let current = parseFloat(funds[currency].toFixed(5)),
                 currentPart = parseFloat((current % 1).toFixed(5)),
-                currentInt = ~~(Math.abs(current));
-
-            funds[currency] = (currentInt > 0) ? currentInt : 0;
-
-            if (currency != "cp") {
-                // We calculate the amount of lower currency we get for the fraction of higher currency we have
-                let change = (currency === 'pp') ? currentPart / rates[currency] : currentPart * rates[compensation[currency]];
-                funds[compensation[currency]] += change;
+                currentInt = ~~(Math.abs(current));          
+            if(current < 0) {
+                funds[compensation[currency]] += CurrencyHelper._calculateCoin(current, compensation[currency], currency);
+                funds[currency] = 0;
+            } else if (currentPart != 0) {
+                funds[compensation[currency]] += CurrencyHelper._calculateCoin(funds[currency], compensation[currency], currency);
+                funds[currency] = currentInt;
             }
-        }
+        });
 
         return funds;
+    }
+
+    _isInt(n){
+        return Number(n) === n && n % 1 === 0;
+    }
+    
+    _isFloat(n){
+        return Number(n) === n && n % 1 !== 0;
     }
 }
