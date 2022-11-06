@@ -18,11 +18,10 @@
                 "strictNullChecks": true,
                 "esModuleInterop": false,
                 "types": [
-                        "@league-of-foundry-developers/foundry-vtt-types",
+                        "./types",
+                        "@league-of-foundry-developers/foundry-vtt-types/index-lenient",
+                        "@league-of-foundry-developers/foundry-vtt-dnd5e-types",
                         "node",
-                ],
-                "typeRoots": [
-                        "C:\\Users\\jackp\\AppData\\Local\\FoundryVTT\\Data\\systems\\dnd5e\\module"
                 ],
                 "resolveJsonModule": true
         },
@@ -35,5 +34,6 @@
                 "rollup.config.js",
                 "test/**/*",
                 "dist/**.*",
+                "coverage"
         ],
 }

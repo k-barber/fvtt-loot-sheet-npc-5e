@@ -2,16 +2,16 @@
     <ul class="items-list inventory-list">
         {{#each actor.features as |section sid|}}
             {{#each section.items as |item iid|}}
-                <li class="item loot-trigger rarity-{{#if item.data.rarity}}{{item.data.rarity}}{{else}}common{{/if}}"
+                <li class="item loot-trigger rarity-{{#if item.system.rarity}}{{item.system.rarity}}{{else}}common{{/if}}"
                     data-item-id="{{item._id}}"
-                    data-item-quantity="{{item.data.quantity}}"
-                    data-item-weight="{{lootsheetweight item.data.weight}}{{lootsheetstackweight item.data.weight item.data.quantity}}"
-                    data-item-weight-hanging="{{lootsheetweight item.data.weight}}{{lootsheetstackweight item.data.weight item.data.quantity}}"
-                    data-item-description="{{item.data.description.value}}"
-                    data-item-name="{{item.data.name}}"
+                    data-item-quantity="{{item.system.quantity}}"
+                    data-item-weight="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.system.quantity}}"
+                    data-item-weight-hanging="{{lootsheetweight item.system.weight}}{{lootsheetstackweight item.system.weight item.system.quantity}}"
+                    data-item-description="{{item.description.value}}"
+                    data-item-name="{{item.name}}"
                     >
                     <div class="image" style="background-image: url({{item.img}})">
-                        <span class="quantity">{{item.data.quantity}}</span>
+                        <span class="quantity">{{item.system.quantity}}</span>
                     </div>
                 </li>
             {{/each}}
@@ -21,9 +21,9 @@
     <div class="inventory-filters flexrow">
         {{#ifeq lootsheettype "Loot"}}
             <ul class="currency flexrow">
-                {{#each data.currency as |c i|}}
+                {{#each currency as |c i|}}
                     <li class="coin currency-item coin-{{i}}" title="{{lookup (lookup ../config.currencies i) 'label'}}">
-                        <input type="text" name="data.currency.{{i}}" value="{{c}}" data-dtype="number"/>
+                        <input type="text" name="currency.{{i}}" value="{{c}}" data-dtype="number"/>
                     </li>
                 {{/each}}
             </ul>

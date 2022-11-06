@@ -45,7 +45,9 @@ export class TableRoller {
 			throw new Error(MODULE.ns + " | " + msg);
 		}
 
-		if (!table.data.formula) return console.log(MODULE.ns + ` | tableRoller | Error: No Forumla found for table: ${table.name}`);
+		if (!table.formula) {
+			table.formula = amountToRoll+'d'+this.table.results.size;
+		}		
 
 		while (amountToRoll > 0) {
 			const resultsLeft = await this.checkResultsLeft(table, amountToRoll);
@@ -57,7 +59,7 @@ export class TableRoller {
 				drawnResults = await this._updateDrawnResults(drawResult, drawnResults, depth, options);
 				amountToRoll -= resultToDraw;
 		}
-
+		
 		return drawnResults;
 	}
 
@@ -101,9 +103,9 @@ export class TableRoller {
 	async _getInnerTableOrFalse(result) {
 		let rolltable = false;
 
-		if(result.data.type === CONST.TABLE_RESULT_TYPES.DOCUMENT){
+		if(result.type === CONST.TABLE_RESULT_TYPES.DOCUMENT){
 			rolltable = this._getRolltableFromGameWorld(result);
-		} else if (result.data.type === CONST.TABLE_RESULT_TYPES.COMPENDIUM) {
+		} else if (result.type === CONST.TABLE_RESULT_TYPES.COMPENDIUM) {
 			rolltable = await this._getRollTableFromCompendium(result);
 		}
 
@@ -117,8 +119,8 @@ export class TableRoller {
 	 * @returns {Promise<RollTable|false>} rolltable
 	 */
 	_getRolltableFromGameWorld(result) {
-		if (result.data.collection === 'RollTable') {
-			return game.tables.get(result.data.resultId);
+		if (result.collection === 'RollTable') {
+			return game.tables.get(result.documentId);
 		}
 		return false;
 	}
@@ -130,7 +132,7 @@ export class TableRoller {
 	 * @returns {Promise<RollTable>|false} rolltable
 	 */
 	async _getRollTableFromCompendium(result) {
-		let uuidString = `Compendium.${result.data.collection}.${result.data.resultId}`,
+		let uuidString = `Compendium.${result.documentCollection}.${result.documentId}`,
 		rolltable = await fromUuid(uuidString);
 
 		if (!rolltable) {
@@ -150,8 +152,8 @@ export class TableRoller {
 	 * @returns {number}
 	 */
 	async checkResultsLeft(table, amountToRoll) {
-		if (!table.data.replacement) {
-			const resultsLeft = table.data.results.reduce(function (n, r) { return n + (!r.drawn) }, 0)
+		if (!table.replacement) {
+			const resultsLeft = table.results.reduce(function (n, r) { return n + (!r.drawn) }, 0)
 
 			if (resultsLeft === 0) {
 				await table.reset();

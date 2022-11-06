@@ -20,7 +20,7 @@ export class LootSeeder {
 
 		for (const currentActor of actors) {
 			//skip linked tokens
-			if (!currentActor || (currentActor.data.actorLink && options.force)) continue;
+			if (!currentActor || (currentActor.actorLink && options.force)) continue;
 
 			const rolltableReferences = ActorHelper.getRollTables(currentActor);
 			if (!rolltableReferences || rolltableReferences.length === 0) continue;
@@ -31,7 +31,7 @@ export class LootSeeder {
 					ui.notifications.error(MODULE.ns + `: No Rollable Table found with id "${rolltableReferences}".`);
 					continue;
 				}
-				let customRoll = await new Roll(this._getShopQtyFormula(currentActor), currentActor.data).roll({ async: true });
+				let customRoll = await new Roll(this._getShopQtyFormula(currentActor), currentActor).roll({ async: true });
 
 				options = this._prepareOptions(options, this._getFormulas(currentActor), customRoll.total, currentActor.uuid);
 				await ActorHelper.addLootToTarget(currentActor, rolltable, options);
@@ -70,7 +70,7 @@ export class LootSeeder {
 	}
 
 	static _getRollTables(actor) {
-		const creatureType = actor.data.data.details.type.value,
+		const creatureType = actor.type
 			rolltableFromActor = ActorHelper.getLinkedRolltable(actor),
 			rolltableByCreature = ActorHelper.getLinkedRolltableByCreatureType(creatureType),
 			rolltableByFilters = ActorHelper.getLinkedRolltableByFilters(actor),
@@ -92,12 +92,11 @@ export class LootSeeder {
 		const shopQtyFormula = actor.getFlag(MODULE.ns, MODULE.flags.shopQty) || game.settings.get(MODULE.ns, "fallbackShopQty") || "1",
 			itemQtyFormula = actor.getFlag(MODULE.ns, MODULE.flags.itemQty) || game.settings.get(MODULE.ns, "fallbackItemQty") || "1",
 			itemQtyLimitFormula = actor.getFlag(MODULE.ns, MODULE.flags.itemQtyLimit) || game.settings.get(MODULE.ns, "fallbackItemQtyLimit") || "0",
-			currencyFormula = actor.getFlag(MODULE.ns, MODULE.flags.currencyFormula) || game.settings.get(MODULE.ns, "fallbackCurrencyFormula") || "1d3[gp]",
-			formulas = { itemQtyFormula: itemQtyFormula, itemQtyLimitFormula: itemQtyLimitFormula, shopQtyFormula: shopQtyFormula, currencyFormula: currencyFormula };
+			currencyFormula = actor.getFlag(MODULE.ns, MODULE.flags.currencyFormula) || game.settings.get(MODULE.ns, MODULE.settings.keys.lootseeder.lootCurrencyDefault) || "2d3[sp]",
 
-			console.log(formulas);
+		formulas = { itemQtyFormula: itemQtyFormula, itemQtyLimitFormula: itemQtyLimitFormula, shopQtyFormula: shopQtyFormula, currencyFormula: currencyFormula };
 
-			return formulas;
+		return formulas;
 	}
 
 }

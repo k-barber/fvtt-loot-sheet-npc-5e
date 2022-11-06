@@ -87,7 +87,7 @@ export class LootSeederSettingsConfigApp extends AppSettingMixin(FormApplication
 
     // Return data
     return {
-      systemTitle: game.system.data.title,
+      systemTitle: game.system.title,
       data: SettingsHelper.getTabbedSettings(data, MODULE.ns)
     };
   }

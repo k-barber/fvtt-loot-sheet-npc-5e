@@ -70,13 +70,13 @@ export class TableHelper {
 	static async _rollSubTables(item, index = 0) {
 		if (item instanceof RollTable) {
 			const subTableResults = await item.roll(),
-				collection = subTableResults.results[index].data.collection;
+				collection = subTableResults.results[index].collection;
 
 			if (collection === "Item") {
-				item = game.items.get(subTableResults.results[index].data.resultId);
+				item = game.items.get(subTableResults.results[index].resultId);
 			} else {
-				let itemCollection = game.packs.get(subTableResults.results[index].data.collection);
-				item = await itemCollection.getDocument(subTableResults.results[index].data.resultId);
+				let itemCollection = game.packs.get(subTableResults.results[index].collection);
+				item = await itemCollection.getDocument(subTableResults.results[index].resultId);
 			}
 
 			if (item instanceof RollTable) {

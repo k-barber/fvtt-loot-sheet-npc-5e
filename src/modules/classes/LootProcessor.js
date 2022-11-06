@@ -25,14 +25,13 @@ export class LootProcessor {
         this.actor = actor || this._getLootActor(actor);
         this.rawResults = results;
         this.lootResults = [];
-        this.currencyData = actor.data.data?.currency || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+        this.currencyData = actor?.system?.currency || { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
         this.defaultConversions = {};
         this.options = options || {
             currencyString: '',
             stackSame: true,
             tokenUuid: null,
         };
-
         return this;
     }
 
@@ -40,11 +39,13 @@ export class LootProcessor {
         const currencyString = options?.customRoll.currencyFormula ?? '';
         this._setCurrencyData(await CurrencyHelper.generateCurrency(currencyString));
 
-        for (const result of this.rawResults) {
-            const betterResults = await this._parseResult(result, options);
+        if(this.rawResults && Symbol.iterator in Object(this.rawResults)){
+            for (const result of this.rawResults) {
+                const betterResults = await this._parseResult(result, options);
 
-            for (const r of betterResults) {
-                this.lootResults.push(r);
+                for (const r of betterResults) {
+                    this.lootResults.push(r);
+                }
             }
         }
 
@@ -69,7 +70,7 @@ export class LootProcessor {
         }
 
         if (existingItem) {
-            itemData = duplicate(existingItem.data);
+            itemData = duplicate(existingItem);
         } else if (item.collection) {
             existingItem = await Utils.getItemFromCompendium(item);
         } else {
@@ -152,18 +153,22 @@ export class LootProcessor {
     */
     async _parseResult(result, options = {}) {
         let betterResults = [];
-        if (result.data.type === CONST.TABLE_RESULT_TYPES.TEXT) {
+        if (result.type === CONST.TABLE_RESULT_TYPES.TEXT) {
             betterResults = await this._parseTextResults(result, options);
         } else {
-            const betterResult = {};
-            betterResult.img = result.data.img;
-            betterResult.collection = result.data.collection;
-            betterResult.text = result.data.text;
-            if (result.data.type === CONST.TABLE_RESULT_TYPES.COMPENDIUM) {
-                betterResult.uuid = `Compendium.${result.data.collection}.${result.data.resultId}`;
+            let _uuid = "";
+            if (result.type === CONST.TABLE_RESULT_TYPES.COMPENDIUM) {
+                _uuid = `Compendium.${result.documentCollection}.${result.documentId}`;
             } else {
-                betterResult.uuid = `${result.data.collection}.${result.data.resultId}`;
+                _uuid = `${result.documentCollection}.${result.documentId}`;
             }
+            let betterResult = {
+                img: result.img,
+                collection: result.collection,
+                text: result.text,
+                uuid: _uuid
+            };
+            
 
             betterResults.push(betterResult);
         }
@@ -172,7 +177,7 @@ export class LootProcessor {
     }
 
     async _parseTextResults(result, options = {}) {
-        const textResults = result.data.text.split('|');
+        const textResults = result.text.split('|');
         let betterResults = [];
 
         for (let textResult of textResults) {
@@ -196,7 +201,7 @@ export class LootProcessor {
                 }
                 // if no table definition is found, the textString is the item name
                 console.log(`results text ${textString.trim()} and commands ${parsedTextResult.commands}`);
-                betterResult.img = result.data.img;
+                betterResult.img = result.img;
                 betterResult.text = parsedTextResult.textString.trim();
                 // if there is command, then it's not a pure text but a generated item
                 if (parsedTextResult.commands.length === 0) {
@@ -266,20 +271,20 @@ export class LootProcessor {
      * @private
      */
     async _addLootItem(actor, item, options) {
-        const newItem = { data: await this.buildItemData(item) },
+        const newItem = await this.buildItemData(item),
             embeddedItems = [...actor.getEmbeddedCollection('Item').values()],
-            originalItem = embeddedItems.find(i => i.name === newItem.data?.name);
+            originalItem = embeddedItems.find(i => i.name === newItem.name);
 
         if (!newItem) console.error(`${MODULE.ns} | _createLootItem: no newItem could be generated from object:`, item);
-        let itemQuantity = newItem?.data?.data?.quantity || 1,
+        let itemQuantity = newItem?.system?.quantity || 1,
             itemLimit = 0;
 
         if (options?.customRoll) {
-            itemQuantity = (await (new Roll(options?.customRoll.itemQtyFormula, actor.data)).roll({ async: true })).total;
-            itemLimit = (await (new Roll(options?.customRoll.itemQtyLimitFormula, actor.data)).roll({ async: true })).total;
+            itemQuantity = (await (new Roll(options?.customRoll.itemQtyFormula, actor)).roll({ async: true })).total;
+            itemLimit = (await (new Roll(options?.customRoll.itemQtyLimitFormula, actor)).roll({ async: true })).total;
         }
 
-        let originalItemQuantity = originalItem?.data?.quantity || 1,
+        let originalItemQuantity = originalItem?.system?.quantity || 1,
             limitCheckedQuantity = this._handleLimitedQuantity(itemQuantity, originalItemQuantity, itemLimit);
 
         /** if the item is already owned by the actor (same name and same PRICE) */
@@ -287,7 +292,7 @@ export class LootProcessor {
             /** add quantity to existing item */
             let updateItem = {
                 _id: originalItem.id,
-                data: {
+                system: {
                     quantity: limitCheckedQuantity
                 }
             };
@@ -298,10 +303,10 @@ export class LootProcessor {
 
             return;
         }
-        if (newItem.data?.name) {
-            newItem.data.data.quantity = limitCheckedQuantity;
+        if (newItem.name) {
+            newItem.system.quantity = limitCheckedQuantity;
             /** we create a new item if we don't own it already */
-            await actor.createEmbeddedDocuments('Item', [newItem.data]);
+            await actor.createEmbeddedDocuments('Item', [newItem]);
         }
     }
 
@@ -339,10 +344,10 @@ export class LootProcessor {
         let matches
 
         while ((matches = regex.exec(tableText)) != null) {
-            this._addCurrency(await CurrencyHelper.generateCurrency(matches[1]))
+            this._addCurrency(await CurrencyHelper.generateCurrency(matches[1]));
         }
 
-        return tableText.replace(regex, '')
+        return tableText.replace(regex, '');
     }
 
     /**
@@ -375,7 +380,7 @@ export class LootProcessor {
             } catch (error) {
                 continue;
             }
-            setProperty(itemData, `data.${cmd.command.toLowerCase()}`, rolledValue);
+            setProperty(itemData, `${cmd.command.toLowerCase()}`, rolledValue);
         }
         return itemData;
     }
@@ -407,8 +412,8 @@ export class LootProcessor {
         const uniqueItems = this.lootResults.reduce((acc, e) => {
             const found = acc.find(x => e.text === x.text && e.collection === x.collection);
             if (found) {
-                let quantity = found.quantity || 1;
-                found.quantity = quantity + 1;
+                let quantity = found.system?.quantity || 1;
+                found.system = {quantity: quantity + 1}
             } else {
                 acc.push(e);
             }
@@ -427,7 +432,7 @@ export class LootProcessor {
      * @returns
      */
     async preItemCreationDataManipulation(itemData, originalItem = null) {
-        itemData = await this.createScrollFromSpell(itemData);
+        itemData = this.createScrollFromSpell(itemData);
 
         if (originalItem && originalItem.documentName) {
             itemData = await ItemHelper.applyItemConversions(itemData, originalItem.documentName);
@@ -443,9 +448,20 @@ export class LootProcessor {
      * @returns {Item}
      */
     async _getRandomSpell(level) {
-        const spells = this.getSpellCache().filter(spell => getProperty(spell, 'data.level') === level),
-            spell = spells[Math.floor(Math.random() * spells.length)]
-        return Utils.findInCompendiumById(spell.collection, spell._id)
+        await this.updateSpellCache();
+        const spellList = this.getSpellCache();
+        let spells = [];
+        for (var i = 0; i < spellList.length; i++)
+        {
+            const spellDesc = spellList[i];
+            const spellReal = await Utils.findInCompendiumById(spellDesc.collection, spellDesc._id);
+            if(spellReal.system.level === level)
+            {
+                spells.push(spellReal);
+            }
+        }
+        const spell = spells[Math.floor(Math.random() * spells.length)]
+        return spell; 
     }
 
     /**
@@ -455,11 +471,12 @@ export class LootProcessor {
    */
     async updateSpellCache(pack) {
         if (game.user.isGM) {
-            const defaultPack = game.settings.get(MODULE.ns, 'dnd5e.spells'),
-                spellCompendium = game.packs.get(defaultPack);
+            const defaultPack = 'dnd5e.spells';
+            // const defaultPack = game.settings.get(MODULE.ns,'dnd5e.spells');
+            const spellCompendium = game.packs.get(defaultPack);
 
             if (!pack && spellCompendium || pack === defaultPack) {
-                const spellCompendiumIndex = await spellCompendium.getIndex({ fields: ['data.level', 'img'] })
+                const spellCompendiumIndex = await spellCompendium.getIndex({ fields: ['level', 'img'] })
                 this._spellCache = spellCompendiumIndex.filter(entry => entry.type === "spell").map(i => mergeObject(i, { collection: spellCompendium.collection }))
             } else {
                 ui.notifications.error(MODULE.ns + `| Spell cache could not be initialized/updated.`);
@@ -501,11 +518,15 @@ export class LootProcessor {
             return itemData
         }
 
-        const itemLink = `@Compendium[${item.pack}.${item.data._id}]`
+        const itemLink = `@Compendium[${item.pack}.${item._id}]`
         // make the name shorter by removing some text
         itemData.name = itemData.name.replace(/^(Spell\s)/, '')
         itemData.name = itemData.name.replace(/(Cantrip\sLevel)/, 'Cantrip')
-        itemData.name += ` (${item.data.name})`
-        itemData.data.description.value = '<blockquote>' + itemLink + '<br />' + item.data.data.description.value + '<hr />' + itemData.data.description.value + '</blockquote>'
+        itemData.name += ` (${item.name})`
+        itemData.description = '<blockquote>' + itemLink + '<br />' + item.system.description + '<hr />' 
+        itemData.type = 'spell';
+        itemData.level = item.system.level;
+
+        return itemData;
     }
 }
